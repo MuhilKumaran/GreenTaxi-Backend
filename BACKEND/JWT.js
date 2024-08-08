@@ -2,13 +2,15 @@ require("dotenv").config({ path: "./config.env" });
 const { sign, verify } = require("jsonwebtoken");
 
 const createTokens = (user) => {
-  const accessToken = sign({ username: user.username }, process.env.SECRET_KEY);
-
+  console.log(user);
+  const accessToken = sign({ email: user.email }, process.env.SECRET_KEY);
   return accessToken;
 };
 
-const validateToken = (req, res, next) => {
+const validateToken = (req, res, next) => {;
   const accessToken = req.cookies["access-token"];
+  console.log(req.cookies);
+  console.log("Token  " + accessToken);
   if (!accessToken) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -21,6 +23,7 @@ const validateToken = (req, res, next) => {
   } catch (err) {
     return res.status(400).json({ error: err });
   }
+
 };
 
 module.exports = { createTokens, validateToken };

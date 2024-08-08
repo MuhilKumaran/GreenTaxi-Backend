@@ -11,12 +11,11 @@ router
   .route("/login")
   .post(customerController.checkLoginBody, customerController.getCustomer);
 
-router
-  .route("/booking")
-  .post(validateToken,);
+router.route("/booking").post(validateToken);
 
 router
   .route("/support")
-  .post(validateToken, customerController.sendSupportMessage);
+  .get(customerController.getSupport)
+  .post(validateToken,customerController.sendSupportMessage);
 
 module.exports = router;

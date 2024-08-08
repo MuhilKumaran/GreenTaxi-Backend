@@ -1,5 +1,6 @@
 const db = require("../mysql");
 const bcrypt = require("bcrypt");
+const { createTokens } = require("../JWT");
 
 exports.checksignUpBody = (req, res, next) => {
   console.log(req.body);
@@ -90,29 +91,33 @@ exports.getCustomer = (req, res, next) => {
           .status(400)
           .json({ status: "fail", message: "Invalid Password" });
       }
-      const acccessToken = createTokens(userdata);
+      const accessToken = createTokens(userdata);
       //expire after 30 days
-      res.cookie("access-token", acccessToken, {
+      console.log("acc  " + accessToken);
+      res.cookie("access-token", accessToken, {
         maxAge: 60 * 60 * 24 * 30 * 1000,
         httpOnly: true,
       });
-      return res.status(200).json(userdata);
+
+      return res.status(200).json({ userdata, accessToken });
     });
   });
 };
 
-exports.sendSupportMessage = (req, res, next) => {
+exports.sendSupportMessage = (req, res) => {
   console.log(req.body);
   const support = req.body;
   const sql =
-    "INSERT INTO greentaxi.reviews (mail_Id,user_name,review_type,details) VALUES(?,?,?,?)";
+    "INSERT INTO greentaxi.reviews (email,name,mobile,city,feedbackType,message) VALUES(?,?,?,?,?,?)";
   db.query(
     sql,
     [
       support.email,
       support.name,
-      support.feedbackType,
-      JSON.stringify(support),
+      support.mobile,
+      support.city,
+      support.feedback,
+      support.message,
     ],
     (err, result) => {
       if (err) {
@@ -121,7 +126,6 @@ exports.sendSupportMessage = (req, res, next) => {
           .status(500)
           .json({ error: "Error inserting review details" });
       }
-      // console.log("Customer details inserted successfully:", result);
       return res.status(200).json({
         status: "success",
         type: "Review",
@@ -129,4 +133,17 @@ exports.sendSupportMessage = (req, res, next) => {
       });
     }
   );
+};
+
+exports.getSupport = (req, res) => {
+  const sql =
+    "SELECT email,name,message FROM greentaxi.reviews ORDER BY created_at DESC LIMIT 5";
+  db.query(sql, (err, result) => {
+    if (err) {
+      return res
+        .status(404)
+        .json({ status: "fail", message: "Error in Finding User" });
+    }
+    return res.status(200).json(result);
+  });
 };
