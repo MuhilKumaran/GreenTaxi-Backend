@@ -32,49 +32,6 @@ exports.addCustomer = async (req, res, next) => {
   });
 };
 
-// exports.getCustomer = (req, res, next) => {
-//   console.log(req.body);
-//   const {  email, password } = req.body;
-
-//   const sql = `
-//   SELECT email,password
-//   FROM customers
-//   WHERE email = ?
-// `;
-
-//   db.query(sql, [email], (err, result) => {
-//     if (err) {
-//       console.log(err);
-//       return res
-//         .status(404)
-//         .json({ status: "fail", message: "Error in  Finding  User" });
-//     }
-//     if (result.length === 0) {
-//       return res
-//         .status(404)
-//         .json({ status: "fail", message: "User not found" });
-//     }
-//     const userdata = result[0];
-//     console.log(userdata.password);
-//     bcrypt.compare(password, userdata.password).then((match) => {
-//       console.log(match);
-//       if (!match) {
-//         return res
-//           .status(400)
-//           .json({ status: "fail", message: "Invalid Password" });
-//       }
-//       const accessToken = createTokens(userdata);
-//       //expire after 30 days
-//       console.log("acc  " + accessToken);
-//       res.cookie("access-token", accessToken, {
-//         maxAge: 60 * 60 * 24 * 30 * 1000,
-//         httpOnly: true,
-//       });
-
-//       return res.status(200).json({ userdata, accessToken });
-//     });
-//   });
-// };
 exports.getCustomer = (req, res, next) => {
   console.log(req.body);
   const { email, password } = req.body;
@@ -99,7 +56,6 @@ exports.getCustomer = (req, res, next) => {
     const userdata = result[0];
     console.log(userdata.password);
 
-    // Compare the password with the hashed password in DB
     bcrypt
       .compare(password, userdata.password)
       .then((match) => {
@@ -109,10 +65,8 @@ exports.getCustomer = (req, res, next) => {
             .json({ status: false, message: "Invalid Password" });
         }
 
-        // If password matches, create a JWT
         const accessToken = createTokens(userdata);
 
-        // Return the JWT in the response body (no cookies)
         return res.status(200).json({ status: true, userdata, accessToken });
       })
       .catch((err) => {
@@ -166,4 +120,80 @@ exports.getSupport = (req, res) => {
     }
     return res.status(200).json({ status: true, result });
   });
+};
+
+const nodemailer = require("nodemailer");
+
+exports.addBooking = (req, res) => {
+  const {
+    name,
+    mobile,
+    email,
+    pickDate,
+    pickLocation,
+    pickTime,
+    dropCity,
+    comment,
+  } = req.body;
+
+  const sql =
+    "INSERT INTO bookings(name, mobile, email, pick_date, pick_location, pick_time, drop_city, comment) VALUES (?,?,?,?,?,?,?,?)";
+
+  db.query(
+    sql,
+    [name, mobile, email, pickDate, pickLocation, pickTime, dropCity, comment],
+    (err, result) => {
+      if (err) {
+        console.error("Error in Booking:", err);
+        return res
+          .status(500)
+          .json({ status: false, error: "Error in Booking" });
+      }
+
+      const transporter = nodemailer.createTransport({
+        service: "Gmail",
+        auth: {
+          user: process.env.MAIL_ID,
+          pass: process.env.MAIL_PASS,
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.MAIL_ID,
+        to: email,
+        subject: "Booking Confirmation",
+        html: `
+          <h1>Booking Confirmation</h1>
+          <p>Dear ${name},</p>
+          <p>Your ride has been successfully booked.</p>
+          <h3>Booking Details:</h3>
+          <ul>
+            <li>Pick-up Date: ${pickDate}</li>
+            <li>Pick-up Location: ${pickLocation}</li>
+            <li>Pick-up Time: ${pickTime}</li>
+            <li>Drop City: ${dropCity}</li>
+            <li>Comments: ${comment}</li>
+          </ul>
+          <p>Thank you for choosing our service!</p>
+        `,
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Error sending email:", error);
+          return res.status(500).json({
+            status: false,
+            error: "Booking confirmed but failed to send email",
+          });
+        }
+        console.log("Email sent: " + info.response);
+
+        return res.status(200).json({
+          status: true,
+          type: "Booking",
+          message: "Ride Successfully Booked and Email Sent",
+        });
+      });
+    }
+  );
 };
