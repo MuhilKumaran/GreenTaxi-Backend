@@ -4,11 +4,11 @@ const app = express();
 const cors = require("cors");
 const customerRoutes = require("./Routes/customerRoutes");
 app.use(cors());
-const db = require("./mysql");
 app.use(express.json()); // parse requests of content-type - application
 app.use(morgan("dev"));
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
+
 
 app.use("/api/v1/customer", customerRoutes);
 

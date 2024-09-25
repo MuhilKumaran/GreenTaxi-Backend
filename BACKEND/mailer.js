@@ -1,42 +1,40 @@
-const nodemailer = require("nodemailer");
-require("dotenv").config({ path: "./config.env" });
-// Create a transporter object using SMTP transport
+const nodemailer = require('nodemailer');
 
+function sendEmail(data) {
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    service: 'gmail',
     auth: {
-      user: process.env.MAIL_ID,
-      pass: process.env.MAIL_PASS, 
-    },
+      user:process.env.EMAIL_USER,
+      pass:process.env.EMAIL_PASSWORD
+    }
   });
 
-  // Define email message options
   const mailOptions = {
-    from: process.env.MAIL_ID,
-    to: "717821p257@kce.ac.in",
-    subject: "Test Email",
+    from: process.env.EMAIL_USER,
+    to: data.emailName,
+    subject: 'Email Verification-OTP',
     html: `
-          <div style="width:auto;
-          height:auto;
-          background-color:white;
-          text-align: center;
-          border-radius: 10px;">
-          <div><img src="http://surl.li/gsqyu" style="width:100px;height:100px"></div><br>
-              <div><h3>Here is your one-time password</h3></div>
-              <h1>124567</h1>
-              <br>
-              <div style="color:red">Don't share OTP with anyone!</div>
-          </div>
-      `,
+        <div style="width:auto;
+        height:auto;
+        background-color:white;
+        text-align: center;
+        border-radius: 10px;">
+        <div><img src="http://surl.li/gsqyu" style="width:100px;height:100px"></div><br>
+            <div><h3>Here is your one-time password</h3></div>
+            <h1>${data.randomNumber}</h1>
+            <br>
+            <div style="color:red">Don't share OTP with anyone!</div>
+        </div>
+    `
   };
-
-  // Send email
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error("Error sending email:", error);
+  transporter.sendMail(mailOptions, (err, info) => {
+    if (err) {
+      console.log(err);
     } else {
-      console.log("Email sent:", info.response);
+      console.log(`Email sent ${info.response}`);
     }
   });
   transporter.close();
+}
 
+module.exports = { sendEmail };

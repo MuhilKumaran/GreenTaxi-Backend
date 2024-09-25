@@ -5,11 +5,11 @@ const customerController = require("../Controllers/customerController");
 const { validateToken } = require("../JWT");
 router
   .route("/signup")
-  .post(customerController.checksignUpBody, customerController.addCustomer);
+  .post(customerController.addCustomer);
 
 router
   .route("/login")
-  .post(customerController.checkLoginBody, customerController.getCustomer);
+  .post(customerController.getCustomer);
 
 router.route("/booking").post(validateToken);
 
